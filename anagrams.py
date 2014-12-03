@@ -1,6 +1,4 @@
-from collections import Counter
-GLOBAL_DICTIONARY = open('words').read().split()
-
+from matchtree import match_words_for, match_tree_from
 
 def anagrams_1(phrase):
     found = set()
@@ -72,48 +70,6 @@ def anagrams_1_recursive(prefix, remaining_letters, match_root, match_node, word
                     next_prefix, next_remaining, match_root, next_node,
                     words_so_far):
                 yield x
-
-
-def match_words_for(phrase):
-    """
-    Yields all dictionary words that can be made by rearranging a subset of
-    letters in |phrase|.  E.g. 'computer' yields (among others) 'romp' and
-    'cut' and 'computer'.
-    """
-    # Strategy: make a count of letters in phrase.  Then if a dictionary word's
-    # letter count is <= the phrase's count, it's a subset.
-    phrase_count = Counter(phrase)
-    for word in GLOBAL_DICTIONARY:
-        word_count = Counter(word)
-        if all(word_count[L] <= phrase_count[L] for L in word_count):
-            yield word
-
-
-def match_tree_from(words):
-    """
-    Returns a match tree for the given collection of |words|.
-
-    A match tree lets you find out if a string is a prefix of any of |words| in
-    constant time per letter of the prefix.  Here's a match tree for ['a',
-    'an', 'the', 'them'].
-    ROOT: {'a', 't'}
-    'a': {'\n', 'n'} #'\n' is a leaf meaning "end of word"
-    'n': {'\n'}
-    't': {'h'}
-    'h': {'e'}
-    'e': {'\n', 'm'}
-    'm': {'\n'}
-    """
-    result = {}
-    def add(word):
-        """Update |result| to contain |word|."""
-        node = result
-        for letter in word:
-            node = node.setdefault(letter, {})
-        node['\n'] = word
-    for word in words:
-        add(word)
-    return result
 
 
 import sys
