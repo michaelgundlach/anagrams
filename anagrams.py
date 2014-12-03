@@ -1,8 +1,23 @@
+import sys
+from collections import Counter
+
 from matchtree import match_words_for, match_tree_from
 
-def anagrams_1(phrase):
-    found = set()
 
+# anagram functions accept an all-lowercase string phrase and yield a sequence
+# of string anagrams.  Redundant combinations are excluded (e.g. if 'hi there'
+# is included, 'there hi' will not be.)
+
+
+def _has_subset(self, other):
+    """Returns true if other is a strict subset of self."""
+    return all(other[x] <= self[x] for x in other)
+Counter.has_subset = _has_subset
+
+
+def anagrams_1(phrase):
+    """Strategy: see anagrams_1_recursive"""
+    found = set()
     phrase = ''.join(phrase.split())
     match_words = match_words_for(phrase)
     match_tree = match_tree_from(match_words)
@@ -15,8 +30,7 @@ def anagrams_1(phrase):
 
 def anagrams_1_recursive(prefix, remaining_letters, match_root, match_node, words_so_far):
     """
-    Recursively searches for and yields anagrams.  Called initially with an
-    empty |prefix| and a full phrase in |remaining_letters|.
+    Recursively searches for and yields anagrams.
 
     The descriptions of the inputs below include examples for the phrase
     'computer'.
@@ -72,8 +86,59 @@ def anagrams_1_recursive(prefix, remaining_letters, match_root, match_node, word
                 yield x
 
 
-import sys
+def anagrams_2(phrase):
+    """Strategy:
 
-anagrams = anagrams_1
-for anagram in anagrams(sys.argv[1]):
-    print anagram
+    Naively put: generate all combinations of match words and filter out
+    those that don't match.
+
+    Actually: recursively build combinations of match words, aborting
+    when reaching dead ends.
+    """
+    phrase = ''.join(phrase.split())
+    phrase_counter = Counter(phrase)
+    match_words = match_words_for(phrase)
+    candidate_words = [ (word, Counter(word)) for word in match_words ]
+
+    for x in anagrams_2_recursive(phrase_counter, candidate_words):
+        yield x
+
+
+def anagrams_2_recursive(phrase, words):
+    """
+    Finds anagrams of |phrase| created from the given words.
+
+    Inputs are a Counter for a phrase, and tuples of (word, Counter for word).
+    Yields anagrams as space-separated strings.
+    """
+    if all(x==0 for x in phrase.values()):
+        yield ''
+        return
+    if not words:
+        return
+    my_word, word_counter = words[0]
+
+    # Case 1: all the anagrams that don't include my word.
+    anagrams_without_my_word = anagrams_2_recursive(phrase, words[1: ])
+    for anagram in anagrams_without_my_word:
+        yield anagram
+
+    # Case 2: all the anagrams that do include my word.
+    if not phrase.has_subset(word_counter):
+        return
+    smaller_phrase = phrase - word_counter
+    # Note that we do not necessarily remove my_word from the dictionary, in
+    # case it appears multiple times in the anagram (i.e. 'a man and a woman'
+    # wouldn't be possible if using 'a' once removed it from the dictionary.)
+    fewer_words = [ (word, wcount) for (word, wcount) in words
+                                   if smaller_phrase.has_subset(wcount) ]
+    sub_anagrams = anagrams_2_recursive(smaller_phrase, fewer_words)
+    for anagram in sub_anagrams:
+        yield my_word + ' ' + anagram
+
+
+if __name__ == '__main__':
+    anagrams = anagrams_2
+
+    for anagram in anagrams(sys.argv[1].lower()):
+        print anagram
