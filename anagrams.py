@@ -98,6 +98,8 @@ def anagrams_2(phrase):
     phrase = ''.join(phrase.split())
     phrase_counter = Counter(phrase)
     match_words = match_words_for(phrase)
+    # Find the big-word results first
+    match_words = sorted(match_words, key=lambda w: -len(w))
     candidate_words = [ (word, Counter(word)) for word in match_words ]
 
     for x in anagrams_2_recursive(phrase_counter, candidate_words):
@@ -118,27 +120,56 @@ def anagrams_2_recursive(phrase, words):
         return
     my_word, word_counter = words[0]
 
-    # Case 1: all the anagrams that don't include my word.
+    # Case 1: all the anagrams that do include my word.
+    if phrase.has_subset(word_counter):
+        smaller_phrase = phrase - word_counter
+        # Note that we do not necessarily remove my_word from the dictionary,
+        # in case it appears multiple times in the anagram (i.e. 'a man and a
+        # woman' wouldn't be possible if using 'a' once removed it from the
+        # dictionary.)
+        fewer_words = [ (word, wcount) for (word, wcount) in words
+                                       if smaller_phrase.has_subset(wcount) ]
+        sub_anagrams = anagrams_2_recursive(smaller_phrase, fewer_words)
+        for anagram in sub_anagrams:
+            yield my_word + ' ' + anagram
+
+    # Case 2: all the anagrams that don't include my word.
     anagrams_without_my_word = anagrams_2_recursive(phrase, words[1: ])
     for anagram in anagrams_without_my_word:
         yield anagram
 
-    # Case 2: all the anagrams that do include my word.
-    if not phrase.has_subset(word_counter):
-        return
-    smaller_phrase = phrase - word_counter
-    # Note that we do not necessarily remove my_word from the dictionary, in
-    # case it appears multiple times in the anagram (i.e. 'a man and a woman'
-    # wouldn't be possible if using 'a' once removed it from the dictionary.)
-    fewer_words = [ (word, wcount) for (word, wcount) in words
-                                   if smaller_phrase.has_subset(wcount) ]
-    sub_anagrams = anagrams_2_recursive(smaller_phrase, fewer_words)
-    for anagram in sub_anagrams:
-        yield my_word + ' ' + anagram
-
 
 if __name__ == '__main__':
-    anagrams = anagrams_2
+    fns = {'1': anagrams_1, '2': anagrams_2}
 
-    for anagram in anagrams(sys.argv[1].lower()):
-        print anagram
+    if len(sys.argv) < 3:
+        print "Usage:"
+        print "  %s time 'phrase'" % sys.argv[0]
+        print "or"
+        print "  %s [strategy] 'phrase'" % sys.argv[0]
+        print "  where [strategy] is one of [%s]" % ', '.join(fns)
+        sys.exit(1)
+
+    cmd = sys.argv[1]
+    phrase = sys.argv[2].lower()
+
+    if cmd == 'time':
+        import time
+        for fn in reversed(fns.keys()):
+            start = time.time()
+            result = list(fns[fn](phrase))
+            end = time.time()
+            print ("Time: Version %s, %.2fs for phrase '%s'.  " +
+                   "%d total, starts and ends with:") % (
+                   fn, end - start, phrase, len(result))
+            if result:
+                print "  %s" % result[0]
+                print "  %s" % result[-1]
+    else:
+        try:
+            fn = fns[cmd]
+        except:
+            print "Gonna need to specify one of %s" % ','.join(fns)
+            raise
+        for anagram in fn(phrase):
+            print anagram
