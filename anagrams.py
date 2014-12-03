@@ -2,15 +2,20 @@ from collections import Counter
 GLOBAL_DICTIONARY = open('words').read().split()
 
 
-def anagrams(phrase):
+def anagrams_1(phrase):
+    found = set()
+
     phrase = ''.join(phrase.split())
     match_words = match_words_for(phrase)
     match_tree = match_tree_from(match_words)
-    for x in anagrams_recursive('', phrase, match_tree, match_tree, []):
-        yield x
+    for x in anagrams_1_recursive('', phrase, match_tree, match_tree, []):
+        x = ' '.join(sorted(x))
+        if x not in found:
+            found.add(x)
+            yield x
 
 
-def anagrams_recursive(prefix, remaining_letters, match_root, match_node, words_so_far):
+def anagrams_1_recursive(prefix, remaining_letters, match_root, match_node, words_so_far):
     """
     Recursively searches for and yields anagrams.  Called initially with an
     empty |prefix| and a full phrase in |remaining_letters|.
@@ -58,12 +63,12 @@ def anagrams_recursive(prefix, remaining_letters, match_root, match_node, words_
         # words, and the one that assumes there's a longer word to be found.
         if '\n' in next_node:
             found_word = next_node['\n']
-            for x in anagrams_recursive(
+            for x in anagrams_1_recursive(
                     next_prefix, next_remaining, match_root, match_root,
                     words_so_far + [found_word]):
                 yield x
         if True: # just to line things up
-            for x in anagrams_recursive(
+            for x in anagrams_1_recursive(
                     next_prefix, next_remaining, match_root, next_node,
                     words_so_far):
                 yield x
@@ -113,9 +118,6 @@ def match_tree_from(words):
 
 import sys
 
-found = set()
+anagrams = anagrams_1
 for anagram in anagrams(sys.argv[1]):
-    anagram = ' '.join(sorted(anagram))
-    if anagram not in found:
-        print anagram
-        found.add(anagram)
+    print anagram
