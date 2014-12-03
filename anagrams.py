@@ -155,7 +155,7 @@ if __name__ == '__main__':
 
     if cmd == 'time':
         import time
-        for fn in reversed(fns.keys()):
+        for fn in fns.keys():
             start = time.time()
             result = list(fns[fn](phrase))
             end = time.time()
