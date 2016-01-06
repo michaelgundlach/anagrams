@@ -12,7 +12,7 @@ def match_words_for(phrase, source_dictionary=GLOBAL_DICTIONARY):
     Optional |source_dictionary| defaults to the list of words in the 'words'
     file on disk.
     """
-    # Strategy: make a count of letters in phrase.  Then if a dictionary word's
+    # new Strategy: make a count of letters in phrase.  Then if a dictionary word's
     # letter count is <= the phrase's count, it's a subset.
     phrase_count = Counter(phrase)
     for word in source_dictionary:
